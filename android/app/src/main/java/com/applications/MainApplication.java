@@ -1,6 +1,11 @@
 package com.applications;
 
 import android.app.Application;
+import android.widget.Toast;
+
+import com.clevertap.android.pushtemplates.PushTemplateNotificationHandler;
+import com.clevertap.android.sdk.interfaces.NotificationHandler;
+import com.clevertap.android.sdk.pushnotification.CTPushNotificationListener;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
 import com.facebook.react.ReactNativeHost;
@@ -8,11 +13,18 @@ import com.facebook.react.ReactPackage;
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint;
 import com.facebook.react.defaults.DefaultReactNativeHost;
 import com.facebook.soloader.SoLoader;
+
+import java.util.HashMap;
 import java.util.List;
 
-public class MainApplication extends Application implements ReactApplication {
+import com.clevertap.android.sdk.ActivityLifecycleCallback;
+import com.clevertap.react.CleverTapPackage;
+import com.clevertap.react.CleverTapApplication;
+import com.clevertap.android.sdk.CleverTapAPI;
 
-  private final ReactNativeHost mReactNativeHost =
+public class MainApplication extends CleverTapApplication implements ReactApplication, CTPushNotificationListener {
+
+    private final ReactNativeHost mReactNativeHost =
       new DefaultReactNativeHost(this) {
         @Override
         public boolean getUseDeveloperSupport() {
@@ -51,12 +63,23 @@ public class MainApplication extends Application implements ReactApplication {
 
   @Override
   public void onCreate() {
+    CleverTapAPI.setDebugLevel(CleverTapAPI.LogLevel.VERBOSE);
+    ActivityLifecycleCallback.register(this);
     super.onCreate();
     SoLoader.init(this, /* native exopackage */ false);
     if (BuildConfig.IS_NEW_ARCHITECTURE_ENABLED) {
       // If you opted-in for the New Architecture, we load the native entry point for this app.
       DefaultNewArchitectureEntryPoint.load();
     }
+    CleverTapAPI clevertapDefaultInstance = CleverTapAPI.getDefaultInstance(getApplicationContext());
+    clevertapDefaultInstance.setCTPushNotificationListener(this);
+    CleverTapAPI.setNotificationHandler((NotificationHandler)new PushTemplateNotificationHandler());
     ReactNativeFlipper.initializeFlipper(this, getReactNativeHost().getReactInstanceManager());
   }
+
+    @Override
+    public void onNotificationClickedPayloadReceived(HashMap<String, Object> payload) {
+        //Use your custom logic for  the payload
+        Toast.makeText(this, "Notification click callback received", Toast.LENGTH_SHORT).show();
+    }
 }
